@@ -1,4 +1,4 @@
-from src.scopie.scopie import is_allowed, ValidationError
+from src.scopie.scopie import is_allowed, ScopieError
 import json
 import pytest
 
@@ -34,5 +34,5 @@ def test_is_allowed(id, actionScopes, actorRules, variables, result, error):
         actual = is_allowed(actionScopes, actorRules, **variables)
         assert actual == result
         assert error is None
-    except ValidationError as e:
+    except ScopieError as e:
         assert error == e.msg

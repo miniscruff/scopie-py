@@ -36,5 +36,3 @@ def test_is_allowed(id, actionScopes, actorRules, variables, result, error):
         assert error is None
     except ValidationError as e:
         assert error == e.msg
-        
-

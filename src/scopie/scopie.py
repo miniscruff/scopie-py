@@ -9,7 +9,7 @@ var_prefix = "@"
 allow_permission = "allow"
 deny_permission = "deny"
 
-allowed_extra_chars = {'_', '-', var_prefix, wildcard}
+allowed_extra_chars = {"_", "-", var_prefix, wildcard}
 
 
 class ScopieError(Exception):
@@ -26,10 +26,10 @@ def is_valid_char(char: str) -> bool:
     if char >= "a" and char <= "z":
         return True
 
-    if char >= 'A' and char <= 'Z':
+    if char >= "A" and char <= "Z":
         return True
 
-    if char >= '0' and char <= '9':
+    if char >= "0" and char <= "9":
         return True
 
     return char in allowed_extra_chars
@@ -63,12 +63,13 @@ def is_allowed(
             for actor_split in actor_rules_split:
                 for c in actor_split:
                     if not is_valid_char(c):
-                        raise ScopieError(f"scopie-100 in actor: invalid character '{c}'")
+                        raise ScopieError(
+                            f"scopie-100 in actor: invalid character '{c}'"
+                        )
 
             for c in action_block:
                 if not is_valid_char(c):
                     raise ScopieError(f"scopie-100 in action: invalid character '{c}'")
-
 
             if action_block not in actor_rules_split:
                 break

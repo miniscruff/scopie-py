@@ -17,9 +17,7 @@ class ScopieError(Exception):
         self.msg = msg
 
     def __eq__(self, other) -> bool:
-        if isinstance(other, ScopieError):
-            return self.msg == other.msg
-        return False
+        return isinstance(other, ScopieError) and self.msg == other.msg
 
 
 def is_valid_char(char: str) -> bool:
@@ -34,90 +32,92 @@ def is_valid_char(char: str) -> bool:
 
     return char in allowed_extra_chars
 
-
-def is_allowed(
-    action_scopes: List[str],
-    actor_rules: List[str],
-    **vars: Dict[str, str],
-) -> bool | ScopieError:
-    has_been_allowed = False
-    if not actor_rules:
-        return False
-
-    if actor_rules[0] == "":
-        raise ScopieError("scopie-106 in actor: rule was empty")
-
-    if len(action_scopes) == 0:
-        raise ScopieError("scopie-106 in action: scopes was empty")
-
-    actor_blocks = actor_rules[0].split(block_seperator)
-    action_blocks = action_scopes[0].split(block_seperator)
-    for i, (actor_block, action_block) in enumerate(
-        zip_longest(actor_blocks[1:], action_blocks)
+def compare_rule_to_scope(rule: str, scope: str, vars: dict) -> bool:
+    rule_blocks = rule.split(block_seperator)
+    scope_blocks = scope.split(block_seperator)
+    for i, (rule_block, scope_block) in enumerate(
+        zip_longest(rule_blocks[1:], scope_blocks)
     ):
-        if action_block == "":
-            raise ScopieError("scopie-106 in action: scope was empty")
+        if scope_block == "":
+            raise ScopieError("scopie-106 in scope: scope was empty")
 
-        if actor_block == "":
-            raise ScopieError("scopie-106 in action: actor was empty")
+        if rule_block == "":
+            raise ScopieError("scopie-106 in rule: rule was empty")
 
-        if not action_block or not actor_block:
-            break
+        if not scope_block or not rule_block:
+            return False
 
-        if actor_block == wildcard:
+        if rule_block == wildcard:
             continue
 
-        if len(actor_block) == 2 and actor_block == wildcard + wildcard:
-            print(i, len(actor_blocks), "super")
-            if i < len(actor_blocks) - 2:
-                print("not at the end")
+        if len(rule_block) == 2 and rule_block == wildcard + wildcard:
+            if i < len(rule_blocks) - 2:
                 raise ScopieError("scopie-105: super wildcard not in the last block")
 
-            return actor_blocks[0] == allow_permission
+            return rule_blocks[0] == allow_permission
 
-        if actor_block[0] == var_prefix:
-            var_name = actor_block[1:]
+        if rule_block[0] == var_prefix:
+            var_name = rule_block[1:]
             if var_name not in vars:
                 raise ScopieError(f"scopie-104: variable '{var_name}' not found")
-            if vars[var_name] != action_block:
-                break
+            if vars[var_name] != scope_block:
+                return False
         else:
-            actor_rules_split = actor_block.split(array_seperator)
+            rules_split = rule_block.split(array_seperator)
 
-            for actor_split in actor_rules_split:
-                if actor_split[0] == var_prefix:
+            for rule_split in rules_split:
+                if rule_split[0] == var_prefix:
                     raise ScopieError(
-                        f"scopie-101: variable '{actor_split[1:]}' found in array block"
+                        f"scopie-101: variable '{rule_split[1:]}' found in array block"
                     )
 
                 if (
-                    actor_split[0] == wildcard
-                    and len(actor_split) > 1
-                    and actor_split[1] == wildcard
+                    rule_split[0] == wildcard
+                    and len(rule_split) > 1
+                    and rule_split[1] == wildcard
                 ):
                     raise ScopieError("scopie-103: super wildcard found in array block")
 
-                if actor_split[0] == wildcard:
+                if rule_split[0] == wildcard:
                     raise ScopieError("scopie-102: wildcard found in array block")
 
-                for c in actor_split:
+                for c in rule_split:
                     if not is_valid_char(c):
                         raise ScopieError(
-                            f"scopie-100 in actor: invalid character '{c}'"
+                            f"scopie-100 in rule: invalid character '{c}'"
                         )
 
-            for c in action_block:
+            for c in scope_block:
                 if not is_valid_char(c):
-                    raise ScopieError(f"scopie-100 in action: invalid character '{c}'")
+                    raise ScopieError(f"scopie-100 in scope: invalid character '{c}'")
 
-            if action_block not in actor_rules_split:
-                break
+            if scope_block not in rules_split:
+                return False
 
-    # Runs only at completion of loop
-    else:
-        if actor_blocks[0] == deny_permission:
-            return False
-        else:
-            has_been_allowed = True
+    return True
+
+def is_allowed(
+    scopes: List[str],
+    rules: List[str],
+    **vars: Dict[str, str],
+) -> bool | ScopieError:
+    has_been_allowed = False
+    if not rules:
+        return False
+
+    if rules[0] == "":
+        raise ScopieError("scopie-106 in rule: rule was empty")
+
+    if len(scopes) == 0:
+        raise ScopieError("scopie-106 in scope: scopes was empty")
+
+    for rule in rules:
+        for scope in scopes:
+            match = compare_rule_to_scope(rule, scope, vars)
+            if match and rule.startswith(deny_permission):
+                    return False
+            elif match:
+                has_been_allowed = True
+
 
     return has_been_allowed

@@ -15,11 +15,11 @@ install: # Install python packages
 
 .PHONY: test
 test: # Run unit test suite
-	pytest
+	pytest --benchmark-disable
 
 .PHONY: bench
 bench: # Run benchmark test suite
-	echo none
+	pytest --benchmark-enable
 
 .PHONY: format
 format: # Run linter and formatters

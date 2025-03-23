@@ -50,6 +50,7 @@ def generate_benchmark_parameters(values):
         for value in values
     ]
 
+
 @pytest.mark.parametrize(
     "scopes, rules, variables, result",
     generate_benchmark_parameters(data["benchmarks"]),
@@ -60,6 +61,7 @@ def test_benchmarks(scopes, rules, variables, result):
 
     actual = is_allowed(scopes, rules, **variables)
     assert actual == result
+
 
 @pytest.mark.parametrize(
     "scopes, rules, variables, result",

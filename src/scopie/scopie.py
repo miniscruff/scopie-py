@@ -32,6 +32,7 @@ def is_valid_char(char: str) -> bool:
 
     return char in allowed_extra_chars
 
+
 def compare_rule_to_scope(rule: str, scope: str, vars: dict) -> bool:
     rule_blocks = rule.split(block_seperator)
     scope_blocks = scope.split(block_seperator)
@@ -96,6 +97,7 @@ def compare_rule_to_scope(rule: str, scope: str, vars: dict) -> bool:
 
     return True
 
+
 def is_allowed(
     scopes: List[str],
     rules: List[str],
@@ -115,9 +117,8 @@ def is_allowed(
         for scope in scopes:
             match = compare_rule_to_scope(rule, scope, vars)
             if match and rule.startswith(deny_permission):
-                    return False
+                return False
             elif match:
                 has_been_allowed = True
-
 
     return has_been_allowed

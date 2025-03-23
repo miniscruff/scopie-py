@@ -102,7 +102,7 @@ def is_allowed(
     scopes: List[str],
     rules: List[str],
     **vars: Dict[str, str],
-) -> bool | ScopieError:
+) -> bool:
     has_been_allowed = False
     if not rules:
         return False

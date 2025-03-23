@@ -30,6 +30,20 @@ jobs:
           name: release-dists
           path: dist/
 
+      - name: Get the latest version
+        id: latest
+        uses: miniscruff/changie-action@v2
+        with:
+          version: latest
+          args: latest
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: ".changes/${{ steps.latest.outputs.output }}.md"
+          tag_name: "${{ steps.latest.outputs.output }}"
+          files: dist/*
+
   pypi-publish:
     runs-on: ubuntu-latest
     needs:

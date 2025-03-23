@@ -10,11 +10,11 @@ kinds:
     - label: Added
       auto: minor
     - label: Changed
-      auto: mino
+      auto: minor
     - label: Deprecated
       auto: minor
     - label: Removed
-      auto: mino
+      auto: minor
     - label: Fixed
       auto: patch
     - label: Security

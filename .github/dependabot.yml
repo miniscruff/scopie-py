@@ -12,6 +12,10 @@ updates:
     labels:
       - "skip changelog"
       - "dependencies"
+    groups:
+      pip-deps:
+        patterns:
+          - "*"
 
   - package-ecosystem: "github-actions"
     directory: "/"

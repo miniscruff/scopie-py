@@ -11,7 +11,7 @@ help:
 
 .PHONY: install
 install: # Install python packages
-	pip install -r requirements.txt
+	pip install -r requirements_dev.txt
 
 .PHONY: test
 test: # Run unit test suite

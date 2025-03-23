@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scopie"
+version = "v0.1.0"
+authors = [
+  {name = "Ronnie Smith", email = "miniscruff@hey.com"},
+]
+description = "Authorization engine providing fine grained access while you control the data. Aimed at being easy to use and implement without overtaking other parts of your system."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.9"
+keywords = ["authorization"]
+classifiers = [
+  "Development Status :: 3 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+[project.urls]
+Homepage = "https://github.com/miniscruff/scopie-py"
+Documentation = "https://github.com/miniscruff/scopie-py"
+Repository = "https://github.com/miniscruff/scopie-py.git"
+Issues = "https://github.com/miniscruff/scopie-py/issues"
+Changelog = "https://github.com/miniscruff/scopie-py/blob/main/CHANGELOG.md"
+
+[tool.setuptools]
+where = ["src"]
+include = ["scopie"]

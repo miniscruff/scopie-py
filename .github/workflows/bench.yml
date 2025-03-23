@@ -1,0 +1,33 @@
+name: benchmark
+
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  benchmark:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.x"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements_dev.txt
+
+    - name: Run benchmark and push
+      run: |
+        pytest --benchmark-enable > BENCHMARKS.txt
+        git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add BENCHMARKS.txt
+        git commit -m "Update benchmarks"
+        git push
+

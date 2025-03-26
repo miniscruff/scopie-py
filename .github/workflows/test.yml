@@ -4,14 +4,16 @@ on:
   push:
     branches: [ main ]
     paths:
+    - 'src/scopie/'
+    - 'tests/'
     - 'requirements_dev.txt'
-    - 'go.sum'
     - '.github/workflows/test.yml'
   pull_request:
     branches: [ main ]
     paths:
+    - 'src/scopie/'
+    - 'tests/'
     - 'requirements_dev.txt'
-    - 'go.sum'
     - '.github/workflows/test.yml'
 
 jobs:

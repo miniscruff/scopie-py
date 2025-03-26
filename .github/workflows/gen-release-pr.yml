@@ -3,6 +3,10 @@ name: Generate release pull request
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   generate-pr:
     runs-on: ubuntu-latest
@@ -32,7 +36,6 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
         with:
-          token: ${{ secrets.GH_PAT }}
           title: Release ${{ steps.latest.outputs.output }}
           branch: release/${{ steps.latest.outputs.output }}
           commit-message: Release ${{ steps.latest.outputs.output }}

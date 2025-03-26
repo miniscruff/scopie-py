@@ -1,4 +1,4 @@
-from typing import List, Dict, Sequence
+from typing import List, Dict, Sequence, Optional
 from itertools import zip_longest
 
 array_seperator = "|"
@@ -139,7 +139,7 @@ def is_allowed(
 
 def validate_scopes(
     scope_or_rules: Sequence[str],
-) -> ScopieError | None:
+) -> Optional[ScopieError]:
     """
     Checks whether or not the given scopes or rules are valid given the
     requirements outlined in the specification.

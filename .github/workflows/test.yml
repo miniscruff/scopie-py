@@ -6,14 +6,14 @@ on:
     paths:
     - 'src/scopie/'
     - 'tests/'
-    - 'requirements_dev.txt'
+    - 'requirements.txt'
     - '.github/workflows/test.yml'
   pull_request:
     branches: [ main ]
     paths:
     - 'src/scopie/'
     - 'tests/'
-    - 'requirements_dev.txt'
+    - 'requirements.txt'
     - '.github/workflows/test.yml'
 
 jobs:
@@ -35,7 +35,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install -r requirements_dev.txt
+        python -m pip install -r requirements.txt
     - name: Lint with black
       run: black --check .
     - name: Test

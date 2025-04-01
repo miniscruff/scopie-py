@@ -32,3 +32,6 @@ replacements:
 - path: pyproject.toml
   find: 'version = ".*"'
   replace: 'version = "{{.Version}}"'
+- path: docs/conf.py
+  find: "release = '.*'"
+  replace: "release = '{{.Version}}'"

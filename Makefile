@@ -12,10 +12,11 @@ help:
 .PHONY: sync
 sync: # Sync requirements.in and requirements.txt
 	pip-compile --generate-hashes requirements.in
+	pip-compile --generate-hashes docs/requirements.in -o docs/requirements.txt
 
 .PHONY: install
 install: # Install python packages
-	pip install -r requirements.txt
+	pip install -r requirements.txt -r docs/requirements.txt
 
 .PHONY: test
 test: # Run unit test suite

@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path("..", "src").resolve()))
 project = "Scopie"
 copyright = "2025, Ronnie Smith"
 author = "Ronnie Smith"
-release = "v0.2.0"
+release = "v0.2.1"
 
 extensions = [
     "sphinx.ext.autodoc",

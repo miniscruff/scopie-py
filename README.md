@@ -1,5 +1,9 @@
-# scopie-py
-Python implementation of scopie
+# Scopie-py
+
+[![PyPI - Version](https://img.shields.io/pypi/v/scopie?style=for-the-badge)](https://pypi.org/project/scopie/)
+[![Static Badge](https://img.shields.io/badge/Stable-black?style=for-the-badge&logo=readthedocs&label=Docs)](https://scopie-py.readthedocs.io/en/stable/)
+
+Python implementation of [scopie](https://github.com/miniscruff/scopie).
 
 ```python
 from scopie import is_allowed

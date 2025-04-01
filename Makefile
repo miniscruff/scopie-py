@@ -11,7 +11,7 @@ help:
 
 .PHONY: install
 install: # Install python packages
-	pip install -r requirements_dev.txt
+	pip install -r requirements.txt -r docs/requirements.txt
 
 .PHONY: test
 test: # Run unit test suite
@@ -24,3 +24,7 @@ bench: # Run benchmark test suite
 .PHONY: format
 format: # Run linter and formatters
 	black .
+
+.PHONY: docs-build
+docs-build: # Build sphinx docs as standalone files
+	sphinx-build docs docs/_build

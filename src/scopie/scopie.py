@@ -14,6 +14,22 @@ allowed_extra_chars = {"_", "-", var_prefix, wildcard}
 
 
 class ScopieError(Exception):
+    """
+    When validating a scope or trying to process a scope or rule that has an incorrect format we return or throw errors.
+    To keep consistency across languages we define an error format in the specification and include error messages as
+    part of the validation test suite.
+
+    Parsing the errors should not be required, this format is aimed at being helpful to log for internal debugging,
+    but are probably not useful for your end users.
+
+    In cases where you are taking user input and saving a scope, you should use the ``validate_scope`` function to check
+    if the provided value is properly formatted.
+    You may also need to do extra processing to make sure the values defined in the scope logically make sense
+    in your system as a whole.
+
+    Reference https://scopie.dev/specification/errors/ for the full list of possible errors.
+    """
+
     def __init__(self, msg: str):
         self.msg = msg
 
@@ -23,7 +39,7 @@ class ScopieError(Exception):
         )
 
 
-def is_valid_char(char: str) -> bool:
+def _is_valid_char(char: str) -> bool:
     if char >= "a" and char <= "z":
         return True
 
@@ -86,13 +102,13 @@ def _compare_rule_to_scope(rule: str, scope: str, vars: dict) -> bool:
                     raise ScopieError("scopie-102: wildcard found in array block")
 
                 for c in rule_split:
-                    if not is_valid_char(c):
+                    if not _is_valid_char(c):
                         raise ScopieError(
                             f"scopie-100 in rule: invalid character '{c}'"
                         )
 
             for c in scope_block:
-                if not is_valid_char(c):
+                if not _is_valid_char(c):
                     raise ScopieError(f"scopie-100 in scope: invalid character '{c}'")
 
             if scope_block not in rules_split:
@@ -108,8 +124,6 @@ def is_allowed(
 ) -> bool:
     """
     Returns whether or not the scopes are allowed with the given rules.
-    Depending on the language, we would also return an error, throw or raise an exception for invalid
-    scopes or rules.
 
         :param scopes: Scopes specifies one or more scopes our actor must match. When using more then one scope, they are treated as a series of OR conditions, and an actor will be allowed if they match any of the scopes.
         :param rules: Rules specifies one or more rules our requesting scopes has to have to be allowed access.
@@ -143,8 +157,6 @@ def validate_scopes(
     """
     Checks whether or not the given scopes or rules are valid given the
     requirements outlined in the specification.
-    Depending on the language, this could return a boolean and throw an error, return
-    an error or other language standard.
 
         :param scope_or_rules: Given scope or rule to validate.
         :returns: An error if one is found or None
@@ -182,7 +194,7 @@ def validate_scopes(
                     )
 
             for c in block:
-                if c != array_seperator and not is_valid_char(c):
+                if c != array_seperator and not _is_valid_char(c):
                     return ScopieError(f"scopie-100: invalid character '{c}'")
 
     return None

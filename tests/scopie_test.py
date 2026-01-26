@@ -1,8 +1,7 @@
-from src.scopie import is_allowed, validate_scopes, ScopieError
+from src.scopie import is_allowed, validate_actions, validate_permissions, ScopieError
 import json
 import pytest
 from typing import Dict, Any, List
-
 
 data = {}
 with open("tests/scenarios.json") as f:
@@ -22,36 +21,46 @@ def generate_test_parameters(values: List[Dict[str, Any]], *keys: str):
 
 
 @generate_test_parameters(
-    data["isAllowedTests"], "scopes", "rules", "variables", "result", "error"
+    data["isAllowedTests"], "actions", "permissions", "variables", "result", "error"
 )
-def test_is_allowed(scopes, rules, variables, result, error):
+def test_is_allowed(actions, permissions, variables, result, error):
     if variables is None:
         variables = {}
 
     try:
-        actual = is_allowed(scopes, rules, **variables)
+        actual = is_allowed(actions, permissions, **variables)
         assert actual == result
         assert error is None
     except ScopieError as e:
         assert error == e.msg
 
 
-@generate_test_parameters(data["validateScopesTests"], "scopes", "error")
-def test_validate_scopes(scopes: List[str], error: str):
-    actual = validate_scopes(scopes)
+@generate_test_parameters(data["validateActionsTests"], "actions", "error")
+def test_validate_actions(actions: List[str], error: str):
+    actual = validate_actions(actions)
     assert actual == error
 
 
-@generate_test_parameters(data["benchmarks"], "scopes", "rules", "variables", "result")
-def test_benchmarks(scopes, rules, variables, result):
+@generate_test_parameters(data["validatePermissionsTests"], "permissions", "error")
+def test_validate_permissions(permissions: List[str], error: str):
+    actual = validate_permissions(permissions)
+    assert actual == error
+
+
+@generate_test_parameters(
+    data["benchmarks"], "actions", "permissions", "variables", "result"
+)
+def test_benchmarks(actions, permissions, variables, result):
     if variables is None:
         variables = {}
 
-    actual = is_allowed(scopes, rules, **variables)
+    actual = is_allowed(actions, permissions, **variables)
     assert actual == result
 
 
-@generate_test_parameters(data["benchmarks"], "scopes", "rules", "variables", "result")
+@generate_test_parameters(
+    data["benchmarks"], "actions", "permissions", "variables", "result"
+)
 @pytest.mark.benchmark(
     max_time=0,
     min_rounds=10_000,
@@ -59,9 +68,11 @@ def test_benchmarks(scopes, rules, variables, result):
     warmup_iterations=50,
     calibration_precision=100,
 )
-def test_benchmarks_as_benchmarks(benchmark, scopes, rules, variables, result):
+def test_benchmarks_as_benchmarks(benchmark, actions, permissions, variables, result):
     if variables is None:
         variables = {}
 
-    actual = benchmark(is_allowed, scopes=scopes, rules=rules, **variables)
+    actual = benchmark(
+        is_allowed, actions=actions, permissions=permissions, **variables
+    )
     assert actual == result

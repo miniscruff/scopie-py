@@ -1,30 +1,31 @@
 from typing import List, Dict, Sequence, Optional
 from itertools import zip_longest
 
-array_seperator = "|"
-block_seperator = "/"
+array_separator = "|"
+block_separator = "/"
 wildcard = "*"
 super_wildcard = "**"
 var_prefix = "@"
 
-allow_permission = "allow"
-deny_permission = "deny"
+allow_grant = "allow"
+deny_grant = "deny"
+grant_separator = ":"
 
-allowed_extra_chars = {"_", "-", var_prefix, wildcard}
+allowed_extra_chars = {"_", "-"}
 
 
 class ScopieError(Exception):
     """
-    When validating a scope or trying to process a scope or rule that has an incorrect format we return or throw errors.
+    When validating a action or trying to process a action or permission that has an incorrect format we return or throw errors.
     To keep consistency across languages we define an error format in the specification and include error messages as
     part of the validation test suite.
 
     Parsing the errors should not be required, this format is aimed at being helpful to log for internal debugging,
     but are probably not useful for your end users.
 
-    In cases where you are taking user input and saving a scope, you should use the ``validate_scope`` function to check
+    In cases where you are taking user input and saving a action, you should use the ``validate_action`` function to check
     if the provided value is properly formatted.
-    You may also need to do extra processing to make sure the values defined in the scope logically make sense
+    You may also need to do extra processing to make sure the values defined in the action logically make sense
     in your system as a whole.
 
     Reference https://scopie.dev/specification/errors/ for the full list of possible errors.
@@ -52,98 +53,108 @@ def _is_valid_char(char: str) -> bool:
     return char in allowed_extra_chars
 
 
-def _compare_rule_to_scope(rule: str, scope: str, vars: dict) -> bool:
-    rule_blocks = rule.split(block_seperator)
-    scope_blocks = scope.split(block_seperator)
-    for i, (rule_block, scope_block) in enumerate(
-        zip_longest(rule_blocks[1:], scope_blocks)
+def _compare_permission_to_action(permission: str, action: str, vars: dict) -> bool:
+    if action == "":
+        raise ScopieError("scopie-106 in action: action was empty")
+
+    if permission == "":
+        raise ScopieError("scopie-106 in permission: permission was empty")
+
+    perms_grant_and_blocks = permission.split(grant_separator, maxsplit=1)
+    grant = perms_grant_and_blocks[0]
+    if grant != allow_grant and grant != deny_grant:
+        raise ScopieError("scopie-107: permission does not start with a grant")
+
+    permission_blocks = perms_grant_and_blocks[1].split(block_separator)
+    action_blocks = action.split(block_separator)
+
+    # if action_block == "":
+
+    for i, (permission_block, action_block) in enumerate(
+        zip_longest(permission_blocks, action_blocks)
     ):
-        if scope_block == "":
-            raise ScopieError("scopie-106 in scope: scope was empty")
-
-        if rule_block == "":
-            raise ScopieError("scopie-106 in rule: rule was empty")
-
-        if not scope_block or not rule_block:
+        if not action_block or not permission_block:
             return False
 
-        if rule_block == wildcard:
+        if permission_block == wildcard:
             continue
 
-        if len(rule_block) == 2 and rule_block == wildcard + wildcard:
-            if i < len(rule_blocks) - 2:
+        if len(permission_block) == 2 and permission_block == wildcard + wildcard:
+            if i < len(permission_blocks) - 1:
                 raise ScopieError("scopie-105: super wildcard not in the last block")
 
-            return rule_blocks[0] == allow_permission
+            return True
 
-        if rule_block[0] == var_prefix:
-            var_name = rule_block[1:]
+        if permission_block[0] == var_prefix:
+            var_name = permission_block[1:]
             if var_name not in vars:
                 raise ScopieError(f"scopie-104: variable '{var_name}' not found")
-            if vars[var_name] != scope_block:
+            if vars[var_name] != action_block:
                 return False
         else:
-            rules_split = rule_block.split(array_seperator)
+            permissions_split = permission_block.split(array_separator)
 
-            for rule_split in rules_split:
-                if rule_split[0] == var_prefix:
+            for permission_split in permissions_split:
+                if permission_split[0] == var_prefix:
                     raise ScopieError(
-                        f"scopie-101: variable '{rule_split[1:]}' found in array block"
+                        f"scopie-101: variable '{permission_split[1:]}' found in array block"
                     )
 
                 if (
-                    rule_split[0] == wildcard
-                    and len(rule_split) > 1
-                    and rule_split[1] == wildcard
+                    permission_split[0] == wildcard
+                    and len(permission_split) > 1
+                    and permission_split[1] == wildcard
                 ):
                     raise ScopieError("scopie-103: super wildcard found in array block")
 
-                if rule_split[0] == wildcard:
+                if permission_split[0] == wildcard:
                     raise ScopieError("scopie-102: wildcard found in array block")
 
-                for c in rule_split:
+                for c in permission_split:
                     if not _is_valid_char(c):
                         raise ScopieError(
-                            f"scopie-100 in rule: invalid character '{c}'"
+                            f"scopie-100 in permission: invalid character '{c}'"
                         )
 
-            for c in scope_block:
+            for c in action_block:
                 if not _is_valid_char(c):
-                    raise ScopieError(f"scopie-100 in scope: invalid character '{c}'")
+                    raise ScopieError(f"scopie-100 in action: invalid character '{c}'")
 
-            if scope_block not in rules_split:
+            if action_block not in permissions_split:
                 return False
 
     return True
 
 
 def is_allowed(
-    scopes: Sequence[str],
-    rules: Sequence[str],
+    actions: Sequence[str],
+    permissions: Sequence[str],
     **vars: str,
 ) -> bool:
     """
-    Returns whether or not the scopes are allowed with the given rules.
+    Whether or not the user actions are allowed with the given permissions.
 
-        :param scopes: Scopes specifies one or more scopes our actor must match. When using more then one scope, they are treated as a series of OR conditions, and an actor will be allowed if they match any of the scopes.
-        :param rules: Rules specifies one or more rules our requesting scopes has to have to be allowed access.
-        :returns: If we are allowed or not
-        :raises ScopieError: If the scopes or rules are invalid based on scopie requirements
+        :param actions: Actions specifies what our user is attemping to do.
+        :param permissions: Permissions specifies what our user has access to do.
+        When using more then one permission, they are treated as a series of OR conditions,
+        and a user will be allowed if they match any of the actions.
+        :returns: If we are allowed to complete the actions.
+        :raises ScopieError: If the actions or permissions are invalid based on scopie requirements
     """
     has_been_allowed = False
-    if not rules:
+    if not permissions:
         return False
 
-    if rules[0] == "":
-        raise ScopieError("scopie-106 in rule: rule was empty")
+    if permissions[0] == "":
+        raise ScopieError("scopie-106 in permission: permission was empty")
 
-    if len(scopes) == 0:
-        raise ScopieError("scopie-106 in scope: scopes was empty")
+    if len(actions) == 0:
+        raise ScopieError("scopie-106 in action: actions was empty")
 
-    for rule in rules:
-        for scope in scopes:
-            match = _compare_rule_to_scope(rule, scope, vars)
-            if match and rule.startswith(deny_permission):
+    for permission in permissions:
+        for action in actions:
+            match = _compare_permission_to_action(permission, action, vars)
+            if match and permission.startswith(deny_grant):
                 return False
             elif match:
                 has_been_allowed = True
@@ -151,37 +162,62 @@ def is_allowed(
     return has_been_allowed
 
 
-def validate_scopes(
-    scope_or_rules: Sequence[str],
+def validate_actions(
+    actions: Sequence[str],
 ) -> Optional[ScopieError]:
     """
-    Checks whether or not the given scopes or rules are valid given the
+    Checks whether the given actions are valid given the
     requirements outlined in the specification.
 
-        :param scope_or_rules: Given scope or rule to validate.
+        :param actions: Given actions to validate.
         :returns: An error if one is found or None
     """
-    if len(scope_or_rules) == 0:
-        return ScopieError("scopie-106: scope or rule was empty")
+    if len(actions) == 0:
+        return ScopieError("scopie-106: action array was empty")
 
-    first_scope = scope_or_rules[0]
-    is_rules = first_scope.startswith((allow_permission, deny_permission))
+    first_action = actions[0]
 
-    for scope_or_rule in scope_or_rules:
-        if len(scope_or_rule) == 0:
-            return ScopieError("scopie-106: scope or rule was empty")
+    for action in actions:
+        if len(action) == 0:
+            return ScopieError("scopie-106: action was empty")
 
-        scope_is_rule = scope_or_rule.startswith(
-            allow_permission
-        ) or scope_or_rule.startswith(deny_permission)
-        if scope_is_rule != is_rules:
-            return ScopieError("scopie-107: inconsistent array of scopes and rules")
-
-        block_split = scope_or_rule.split(block_seperator)
+        block_split = action.split(block_separator)
         for i, block in enumerate(block_split):
-            if block == super_wildcard and i < len(block_split) - 1:
+            for c in block:
+                if not _is_valid_char(c):
+                    return ScopieError(f"scopie-100: invalid character '{c}'")
+
+    return None
+
+
+def validate_permissions(
+    permissions: Sequence[str],
+) -> Optional[ScopieError]:
+    """
+    Checks whether the given permissions are valid given the
+    requirements outlined in the specification.
+
+        :param permissions: Given permissions to validate.
+        :returns: An error if one is found or None
+    """
+    if len(permissions) == 0:
+        return ScopieError("scopie-106: permission array was empty")
+
+    for permission in permissions:
+        if len(permission) == 0:
+            return ScopieError("scopie-106: permission was empty")
+
+        perm_block_split = permission.split(grant_separator, 1)
+        grant = perm_block_split[0]
+        if grant != allow_grant and grant != deny_grant:
+            return ScopieError("scopie-107: permission does not start with a grant")
+
+        blocks = perm_block_split[1].split(block_separator)
+
+        for i, block in enumerate(blocks):
+            if block == super_wildcard and i < len(blocks) - 1:
                 return ScopieError("scopie-105: super wildcard not in the last block")
-            if array_seperator in block:
+            if array_separator in block:
                 if super_wildcard in block:
                     return ScopieError(
                         "scopie-103: super wildcard found in array block"
@@ -194,7 +230,12 @@ def validate_scopes(
                     )
 
             for c in block:
-                if c != array_seperator and not _is_valid_char(c):
+                if (
+                    c != array_separator
+                    and c != wildcard
+                    and c != var_prefix
+                    and not _is_valid_char(c)
+                ):
                     return ScopieError(f"scopie-100: invalid character '{c}'")
 
     return None

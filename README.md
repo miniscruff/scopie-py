@@ -10,10 +10,10 @@ from scopie import is_allowed
 
 users = {
     "elsa": {
-        "rules": ["allow/blog/create|update"],
+        "permissions": ["allow:blog/create|update"],
     },
     "bella": {
-        "rules": ["allow/blog/create"],
+        "permissions": ["allow:blog/create"],
     },
 }
 
@@ -21,7 +21,7 @@ blogPosts = {}
 
 def create_blog(username, blogSlug, blogContent):
     user = users[username]
-    if is_allowed(["blog/create"], user["rules"]):
+    if is_allowed(["blog/create"], user["permissions"]):
         blogPosts[blogSlug] = {
             "author": user,
             "content": blogContent,
@@ -29,7 +29,7 @@ def create_blog(username, blogSlug, blogContent):
 
 def update_blog(username, blogSlug, blogContent):
     user = users[username]
-    if is_allowed(["blog/update"], user["rules"]):
+    if is_allowed(["blog/update"], user["permissions"]):
         blogPosts[blogSlug] = {
             "author": user,
             "content": blogContent,
